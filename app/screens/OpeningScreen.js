@@ -18,6 +18,7 @@ function OpeningScreen(props) {
   console.log("App started!");
   const alertOnClick = () => alert("Must i learn, React Native!!");
   const onPress = () => alert("Selam");
+  // deneme
 
   return (
     <SafeAreaView style={styles.background}>
