@@ -1,5 +1,15 @@
+import React, { useState, useEffect } from "react";
+import * as ImagePicker from "expo-image-picker";
+import Constants from "expo-constants";
+
+import { Camera } from "expo-camera";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+
+import PictureSendingScreen from "./PictureSendingScreen";
+import CameraScreen from "./CameraScreen";
+
 import {
   StyleSheet,
   Text,
@@ -12,13 +22,46 @@ import {
   Button,
   SliderComponent,
   Platform,
+  Dimensions,
 } from "react-native";
 
 function OpeningScreen(props) {
   console.log("App started!");
   const alertOnClick = () => alert("Must i learn, React Native!!");
-  const onPress = () => alert("Selam");
-  // deneme
+  const onPress = () => alert("selam");
+
+  // IMAGE PICK FROM GALLERY
+  const [image, setImage] = useState(null); // image picking
+
+  useEffect(() => {
+    (async () => {
+      if (Platform.OS !== "web") {
+        const {
+          status,
+        } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          alert("Galerine erişmek için izine ihtiyacım var!");
+        }
+      }
+    })();
+  }, []);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
+    return <PictureSendingScreen />;
+  };
+  // IMAGE PICK FROM GALLERY
 
   return (
     <SafeAreaView style={styles.background}>
@@ -42,7 +85,7 @@ function OpeningScreen(props) {
         <Text style={styles.textInsideButtons}>To use camera, click me!</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={onPress} style={styles.picturesButton}>
+      <TouchableOpacity onPress={pickImage} style={styles.picturesButton}>
         <Text style={styles.textInsideButtons}>To pick image, click me!</Text>
       </TouchableOpacity>
 
@@ -70,7 +113,7 @@ const styles = StyleSheet.create({
   textInsideButtons: {
     fontSize: 20,
     position: "absolute",
-    top: 21,
+    top: 19,
   },
   cameraButton: {
     width: "70%",
@@ -80,6 +123,9 @@ const styles = StyleSheet.create({
     top: 600,
     alignItems: "center",
     borderRadius: 20,
+    borderWidth: 3,
+    borderStyle: "solid",
+    borderColor: "white",
   },
   picturesButton: {
     width: "70%",
@@ -89,6 +135,9 @@ const styles = StyleSheet.create({
     top: 690,
     alignItems: "center",
     borderRadius: 20,
+    borderWidth: 3,
+    borderStyle: "solid",
+    borderColor: "white",
   },
   footer: {
     width: "100%",
