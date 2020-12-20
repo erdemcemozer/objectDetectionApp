@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
 import Constants from "expo-constants";
 
-import { Camera } from "expo-camera";
 import { StatusBar } from "expo-status-bar";
+import { Camera } from "expo-camera";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
@@ -22,12 +22,13 @@ import {
   Dimensions,
 } from "react-native";
 
-import OpeningScreen from "./app/screens/OpeningScreen";
+// HOME SCREEN FUNCTION
 
-function App() {
+function HomeScreen({ navigation }) {
   console.log("App started!");
   const alertOnClick = () => alert("Must i learn, React Native!!");
-  const onPress = () => alert("selam");
+  // const onPress = () => alert("selam");
+  const onPress = () => navigation.navigate("Camera");
 
   // IMAGE PICK FROM GALLERY
   const [image, setImage] = useState(null); // image picking
@@ -46,18 +47,20 @@ function App() {
   }, []);
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    let photo = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
-    console.log(result);
+    console.log(photo);
 
-    if (!result.cancelled) {
-      setImage(result.uri);
+    if (!photo.cancelled) {
+      setImage(photo.uri);
     }
+
+    navigation.navigate("Image", { photo: photo });
   };
   // IMAGE PICK FROM GALLERY
 
@@ -87,25 +90,156 @@ function App() {
         <Text style={styles.textInsideButtons}>To pick image, click me!</Text>
       </TouchableOpacity>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Made with love. Author : Erdem Özer
-        </Text>
-      </View>
       <StatusBar style="auto" />
     </SafeAreaView>
   );
 }
 
+// HOME SCREEN FUNCTION
+
+// CAMERA SCREEN FUNCTION
+
+function CameraScreen({ navigation }) {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [cameraRef, setCameraRef] = useState(null);
+  const [type, setType] = useState(Camera.Constants.Type.back);
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
+  }, []);
+
+  if (hasPermission === null) {
+    return <View />;
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
+  }
+  return (
+    <View style={{ flex: 1 }}>
+      <Camera
+        style={{ flex: 1 }}
+        type={type}
+        ref={(ref) => {
+          setCameraRef(ref);
+        }}
+        autoFocus="on"
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "transparent",
+            justifyContent: "flex-end",
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              flex: 0.1,
+              alignSelf: "flex-start",
+            }}
+            onPress={() => {
+              setType(
+                type === Camera.Constants.Type.back
+                  ? Camera.Constants.Type.front
+                  : Camera.Constants.Type.back
+              );
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 20,
+                color: "white",
+                left: 70,
+                top: 20,
+              }}
+            >
+              Flip
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ alignSelf: "center" }}
+            onPress={async () => {
+              if (cameraRef) {
+                let photo = await cameraRef.takePictureAsync("photo");
+                console.log("photo", photo);
+                navigation.navigate("Image", { photo: photo });
+              }
+            }}
+          >
+            <View
+              style={{
+                borderWidth: 2,
+                borderRadius: "50%",
+                borderColor: "white",
+                height: 80,
+                width: 80,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                bottom: 80,
+              }}
+            >
+              <View
+                style={{
+                  borderWidth: 2,
+                  borderRadius: "50%",
+                  borderColor: "white",
+                  height: 70,
+                  width: 70,
+                  backgroundColor: "white",
+                }}
+              ></View>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Camera>
+    </View>
+  );
+}
+
+// CAMERA SCREEN FUNCTION
+
+// AFTER CAMERA TAKING PICTURE TO ANOTHER PAGE
+
+function ImageScreen({ route, navigation }) {
+  const { photo } = route.params;
+
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+      <Image source={{ uri: photo.uri }} style={{ width: 380, height: 550 }} />
+    </View>
+  );
+}
+
+// CAMERA SCREEN FUNCTION
+
+// MAIN FUNCTION STARTS HERE
+
+const Stack = createStackNavigator();
+
+function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Camera" component={CameraScreen} />
+        <Stack.Screen name="Image" component={ImageScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 const styles = StyleSheet.create({
+  // for opening screen
   background: {
     flex: 1,
-    backgroundColor: "dodgerblue",
     alignItems: "center",
+    justifyContent: "center",
   },
   exampleBox: {
     position: "absolute",
-    top: 100,
+    top: 80,
     alignItems: "center",
   },
   textInsideButtons: {
@@ -118,39 +252,33 @@ const styles = StyleSheet.create({
     height: 70,
     backgroundColor: "tomato",
     position: "absolute",
-    top: 600,
+    top: 550,
     alignItems: "center",
     borderRadius: 20,
     borderWidth: 3,
     borderStyle: "solid",
-    borderColor: "white",
+    borderColor: "black",
   },
   picturesButton: {
     width: "70%",
     height: 70,
     backgroundColor: "#66ff66",
     position: "absolute",
-    top: 690,
+    top: 640,
     alignItems: "center",
     borderRadius: 20,
     borderWidth: 3,
     borderStyle: "solid",
-    borderColor: "white",
+    borderColor: "black",
   },
-  footer: {
-    width: "100%",
-    height: 60,
-    position: "absolute",
-    bottom: 0,
-    backgroundColor: "gold",
-    alignItems: "center",
-    paddingBottom: Platform.OS === "android" ? 20 : 0,
-  },
-  footerText: {
-    fontSize: 20,
-    position: "absolute",
-    top: 15,
-  },
+
+  // for opening screen
+
+  // for camera
+
+  // for camera
 });
 
 export default App;
+
+// MAIN FUNCTION ENDS HERE
