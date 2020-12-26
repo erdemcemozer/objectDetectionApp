@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
+import * as firebase from "firebase";
 import Constants from "expo-constants";
+import * as Random from "expo-random";
+import uuid from "uuid";
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
 
 import { StatusBar } from "expo-status-bar";
 import { Camera } from "expo-camera";
@@ -22,12 +27,29 @@ import {
   Dimensions,
 } from "react-native";
 
+// FIREBASE UTILS
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDT05teM8aMFY-3vNELBSjPXlVyOo_sc5w",
+  authDomain: "object-detection-app-322e5.firebaseapp.com",
+  projectId: "object-detection-app-322e5",
+  storageBucket: "object-detection-app-322e5.appspot.com",
+  messagingSenderId: "178649181619",
+  appId: "1:178649181619:web:ef7b1192d0ba1d3f71efc6",
+  measurementId: "G-2549R4HMY7",
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+// FIREBASE UTILS
+
 // HOME SCREEN FUNCTION
 
 function HomeScreen({ navigation }) {
   console.log("App started!");
   const alertOnClick = () => alert("Must i learn, React Native!!");
-  // const onPress = () => alert("selam");
   const onPress = () => navigation.navigate("Camera");
 
   // IMAGE PICK FROM GALLERY
@@ -49,7 +71,6 @@ function HomeScreen({ navigation }) {
   const pickImage = async () => {
     let photo = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
@@ -205,14 +226,83 @@ function CameraScreen({ navigation }) {
 function ImageScreen({ route, navigation }) {
   const { photo } = route.params;
 
+  async function uploadImageAsync() {
+    const erdem = uuidv4();
+
+    const blob = await new Promise((resolve, reject) => {
+      console.log("Success!");
+      console.log(photo.uri);
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+      xhr.onerror = function (e) {
+        console.log(e);
+        reject(new TypeError("Network request error!"));
+      };
+      xhr.responseType = "blob";
+      xhr.open("GET", photo.uri, true);
+      xhr.send(null);
+    }).catch((error) => {
+      console.log("kadir" + error);
+    });
+
+    const ref = firebase
+      .storage()
+      .ref()
+      .child("images/" + erdem);
+
+    const snapshot = await ref.put(blob);
+    blob.close();
+    navigation.navigate("DetectedImageScreen");
+    return await snapshot.ref.getDownloadURL();
+  }
+
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Image source={{ uri: photo.uri }} style={{ width: 380, height: 550 }} />
+      <Image
+        source={{ uri: photo.uri }}
+        style={{ bottom: 80, width: 380, height: 550 }}
+      />
+      <TouchableOpacity
+        onPress={uploadImageAsync}
+        style={styles.sendPictureButton}
+      >
+        <Text style={styles.textInsideButtons}>
+          Send the picture for object detection.
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 // CAMERA SCREEN FUNCTION
+
+// SHOWING LAST IMAGE COMES FROM CLOUD
+
+function ShowScreen({ navigation }) {
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+      <Image
+        // source={{ uri: photo.uri }} buraya foto gelcek artık
+        style={{ bottom: 80, width: 380, height: 550 }}
+      />
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate("Home");
+        }}
+        style={styles.lastButton}
+      >
+        <Text style={styles.textInsideButtons}>
+          This page will be the last page, and you can turn back to first page
+          via this button.
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// SHOWING LAST IMAGE COMES FROM CLOUD
 
 // MAIN FUNCTION STARTS HERE
 
@@ -225,6 +315,7 @@ function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Camera" component={CameraScreen} />
         <Stack.Screen name="Image" component={ImageScreen} />
+        <Stack.Screen name="DetectedImageScreen" component={ShowScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -265,6 +356,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#66ff66",
     position: "absolute",
     top: 640,
+    alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderStyle: "solid",
+    borderColor: "black",
+  },
+  sendPictureButton: {
+    width: "70%",
+    height: 90,
+    backgroundColor: "#92acd6",
+    position: "absolute",
+    top: 640,
+    alignItems: "center",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderStyle: "solid",
+    borderColor: "black",
+  },
+  lastButton: {
+    width: "70%",
+    height: 120,
+    backgroundColor: "#ffcf4d",
+    position: "absolute",
+    top: 600,
     alignItems: "center",
     borderRadius: 20,
     borderWidth: 3,
