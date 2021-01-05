@@ -89,10 +89,11 @@ function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.background}>
       <View style={styles.exampleBox}>
         <Text>This app is going to be an object detection app!</Text>
-        <Text>As you can guess i'm just trying to learn now...</Text>
+        <Text>As you can guess we are just trying to learn now...</Text>
         <Text>So here is a picture of Baby Yoda.</Text>
         <Image
           source={{
+            top: 10,
             width: 200,
             height: 300,
             uri:
@@ -283,6 +284,10 @@ function ImageScreen({ route, navigation }) {
 function ShowScreen({ navigation }) {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+      <Text style={styles.textInsideButtons}>
+        This page will be the last page and below this text, your picture will
+        appear with detected objects.
+      </Text>
       <Image
         // source={{ uri: photo.uri }} buraya foto gelcek artık
         style={{ bottom: 80, width: 380, height: 550 }}
